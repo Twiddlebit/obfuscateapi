@@ -147,6 +147,8 @@ do {
     fileHandler.seekToEndOfFile()
     fileHandler.write("import Foundation\n\n".data(using: .utf8)!)
     
+    // aesKey
+    
     fileHandler.seekToEndOfFile()
     let key = String(format: "// using key (%@)\n", aesKey)
     fileHandler.write(key.data(using: .utf8)!)
@@ -197,6 +199,60 @@ do {
     fileHandler.write("\n    ]\n".data(using: .utf8)!)
     fileHandler.seekToEndOfFile()
     fileHandler.write("}\n".data(using: .utf8)!)
+
+    // aesIv
+    
+    fileHandler.seekToEndOfFile()
+    let iv = String(format: "// using iv (%@)\n", hexiv)
+    fileHandler.write(iv.data(using: .utf8)!)
+
+    fileHandler.seekToEndOfFile()
+    fileHandler.write("@inline(__always) public func aesIV() -> [UInt8] {\n".data(using: .utf8)!)
+    
+    fileHandler.seekToEndOfFile()
+    fileHandler.write("    return [\n".data(using: .utf8)!)
+    
+    let aesIVData: Data = hexiv.data(using: .utf8)!
+    
+    fileHandler.seekToEndOfFile()
+    fileHandler.write("        ".data(using: .utf8)!)
+    
+    for (index,character) in aesIVData.enumerated() {
+
+        let firstNumber = UInt8(arc4random_uniform(UInt32(character)))
+
+        switch arc4random_uniform(2) {
+        // adds
+        case 0:
+            fileHandler.seekToEndOfFile()
+            fileHandler.write(String(format: "0x%02X",firstNumber).data(using: .utf8)!)
+            let secondNumber = character - firstNumber
+            fileHandler.seekToEndOfFile()
+            fileHandler.write(String(format: "+0x%02X",secondNumber).data(using: .utf8)!)
+        // substracts
+        default:
+            fileHandler.seekToEndOfFile()
+            fileHandler.write(String(format: "0x%02X",character + firstNumber).data(using: .utf8)!)
+            fileHandler.seekToEndOfFile()
+            fileHandler.write(String(format: "-0x%02X",firstNumber).data(using: .utf8)!)
+            break
+        }
+        
+        if index < aesKeyData.count - 1 {
+            fileHandler.seekToEndOfFile()
+            fileHandler.write(", ".data(using: .utf8)!)
+        }
+        if remainder(Double(index), 9) == 0 && index != 0 {
+            fileHandler.seekToEndOfFile()
+            fileHandler.write("\n        ".data(using: .utf8)!)
+        }
+    }
+    
+    fileHandler.seekToEndOfFile()
+    fileHandler.write("\n    ]\n".data(using: .utf8)!)
+    fileHandler.seekToEndOfFile()
+    fileHandler.write("}\n".data(using: .utf8)!)
+
     fileHandler.closeFile()
 } catch {
     print("Error writing to file \(outfile). Error \(error)")
